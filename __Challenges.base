@@ -1,0 +1,10 @@
+filters:
+  and:
+    - file.hasTag("challenge")
+views:
+  - type: table
+    name: View
+    order:
+      - file.name
+      - THM Difficulty
+      - Description
