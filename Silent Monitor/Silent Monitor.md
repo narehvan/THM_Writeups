@@ -20,7 +20,7 @@ Tools:
   - keepass
   - nmap
 THM Difficulty: Medium
-THM Duration: 30 minutes
+THM Estimation: 30 minutes
 ---
 #challenge
 # Challenge
@@ -48,6 +48,8 @@ Your job is to get in, move through the system, and find out what is really runn
 - **secret dashboard** 
 	- -> there is a dashboard. it's most likely a hidden one and basic wordlists may not find it
 
+>[!Note] Attackbox
+>This write-up assumes the TryHackMe provided attackbox is used, and therefore, the tools and wordlists from the machine is used. Should you use your own attackbox, then you will need to source the tools and wordlists yourself.
 # Initial recon
 
 >[!Note] Concept

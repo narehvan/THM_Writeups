@@ -38,4 +38,5 @@ The "Border" theme (https://community.obsidian.md/themes/border) is the one used
 
 | Challenge      | Link                                      |
 | -------------- | ----------------------------------------- |
+| Domino         | https://tryhackme.com/room/domino         |
 | Silent Monitor | https://tryhackme.com/room/silent-monitor |

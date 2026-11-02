@@ -8,3 +8,8 @@ views:
       - file.name
       - THM Difficulty
       - Description
+    sort:
+      - property: file.name
+        direction: ASC
+      - property: THM Difficulty
+        direction: DESC
