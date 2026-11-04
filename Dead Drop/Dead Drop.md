@@ -11,7 +11,7 @@ Topics:
 - pivoting
 - SOCKS tunneling
 - Active Directory enumeration
-- ACL abuse (AddMember)
+- ACL abuse
 - privilege escalation
 Tools:
 - nmap
